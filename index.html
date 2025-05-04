@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>45s Work / 15s Break Timer with Sound</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+      transition: background-color 0.3s;
+    }
+    #phase {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    #timer {
+      font-size: 4em;
+      color: #2c3e50;
+    }
+    #hint {
+      margin-top: 30px;
+      font-style: italic;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="phase">Press SPACE to start</div>
+  <div id="timer">--:--</div>
+  <div id="hint">(Work: 45s | Break: 15s)</div>
+
+  <script>
+    const phaseEl = document.getElementById('phase');
+    const timerEl = document.getElementById('timer');
+
+    let isWorkPhase = true;
+    let timeLeft = 45;
+    let timerRunning = false;
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateDisplay() {
+      phaseEl.textContent = isWorkPhase ? 'Work Phase (45s)' : 'Break Phase (15s)';
+      timerEl.textContent = formatTime(timeLeft);
+    }
+
+    function playBeep() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(1000, ctx.currentTime); // 1000 Hz
+      gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + 0.3); // 300ms beep
+    }
+
+    function flashBackground(color) {
+      document.body.style.backgroundColor = color;
+      setTimeout(() => {
+        document.body.style.backgroundColor = ''; // reset to default
+      }, 1000);
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      timerRunning = true;
+
+      flashBackground(isWorkPhase ? 'lightgreen' : 'lightcoral');
+      updateDisplay();
+
+      const interval = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          playBeep(); // play sound at end of phase
+          isWorkPhase = !isWorkPhase;
+          timeLeft = isWorkPhase ? 45 : 15;
+          timerRunning = false;
+          startTimer(); // start next phase
+        }
+      }, 1000);
+    }
+
+    // Wait for spacebar to start
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !timerRunning) {
+        startTimer();
+      }
+    });
+  </script>
+</body>
+</html>
+

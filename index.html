@@ -98,6 +98,7 @@
     // Wait for spacebar to start
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && !timerRunning) {
+        playBeep(); 
         startTimer();
       }
     });
